@@ -48,8 +48,8 @@ public class UserHandler {
     String username = context.pathParam("username");
     var response = context.response();
     var userStudent = studentStore.find(username);
-
     var userTutor = tutorStore.find(username);
+
     if (userStudent.isPresent()) {
       studentStore.delete(userStudent.get());
       response.setStatusCode(200).end("User: \"" + username + "\" succesfully deleted!");
