@@ -1,0 +1,193 @@
+openapi: 3.0.1
+info:
+  title: Group Finder REST API
+  description: ''
+  contact:
+    email: Andrej.Sajenko@mni.thm.de
+  version: 1.0.0
+servers:
+- url: https://localhost:8888
+
+tags:
+- name: Users
+  description: Manages users, i.e., students and tutors.
+- name: Candidates
+  description: Generate candidates for a student.
+- name: Groups
+  description: Registered groups.
+
+paths:
+  /users:
+    post:
+      tags:
+          - Users
+      summary: Create a new student or tutor depending on the given input
+      requestBody:
+        description: Student or Tutor representation
+        content:
+          application/json:
+            schema:
+              oneOf:
+                - $ref: '#/components/schemas/Student'
+                - $ref: '#/components/schemas/Tutor'
+      responses:
+          201:
+            description: User created
+          409:
+            description: If a user with the same username already exists.
+    get:
+      tags:
+        - Users
+      summary: Returns a list of all students and tutors
+      responses:
+        200:
+          description: A list of all students and tutors
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  oneOf:
+                    - $ref: '#/components/schemas/Student'
+                    - $ref: '#/components/schemas/Tutor'
+  /users/{username}:
+    delete:
+      tags:
+        - Users
+      summary: Delete a student or tutor
+      parameters:
+          - in: path
+            name: username
+            required: true
+            description: The unique username
+            schema:
+              type: string
+      responses:
+        200:
+          description: If the user was deleted, or does not exists
+  /candidates:
+    get:
+      tags:
+        - Candidates
+      summary: Get a list of candidates sorted by their best streghts for a student.
+      parameters:
+        - in: query
+          name: forStudent
+          required: true
+          description: The username for that the canidates must be selected and sorted.
+          schema:
+            type: string
+      responses:
+          200:
+            description: A list of students sorted
+            content:
+              application/json:
+                schema:
+                  type: array
+                  items:
+                    $ref:  '#/components/schemas/Student'
+  /groups:
+    post:
+      tags:
+        - Groups
+      summary: Register a new group.
+      requestBody:
+        description: Excepts an array of the usernames of all members of the group
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                type: string
+      responses:
+        201:
+          description: If group registered successful. Returns the group representation with assigned tutor and an unique id.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Group'
+        409:
+          description: If any user of the group is already part of another group.
+    get:
+      tags:
+        - Groups
+      summary: Return all registered groups.
+      responses:
+        200:
+          description: A list of groups
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Group'
+  /groups/{gid}:
+    delete:
+      tags:
+        - Groups
+      summary: Delete a group
+      parameters:
+          - in: path
+            name: gid
+            required: true
+            description: The group id of the group that must be deleted
+            schema:
+              type: string
+      responses:
+        200:
+          description: If the group was deleted, or does not exists.
+components:
+  schemas:
+    Student:
+      type: object
+      properties:
+        fname:
+          type: string
+        sname:
+          type: string
+        username:
+          type: string
+        email:
+          type: string
+        password:
+          type: string
+          description: Only for creation, must never be returned!
+        strengths:
+          type: array
+          items:
+            type: string
+        weaknesses:
+          type: array
+          items:
+            type: string
+    Tutor:
+      type: object
+      properties:
+        fname:
+          type: string
+        sname:
+          type: string
+        username:
+          type: string
+        email:
+          type: string
+        password:
+          type: string
+          description: Only for creation, must never be returned!
+        competencies:
+          type: array
+          items:
+            type: string
+        capacity:
+          type: integer
+    Group:
+      type: object
+      properties:
+        id:
+          type: integer
+        tutor:
+          $ref: '#/components/schemas/Tutor'
+        members:
+          type: array
+          items:
+            $ref: '#/components/schemas/Student'
