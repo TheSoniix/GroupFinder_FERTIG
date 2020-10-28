@@ -11,17 +11,23 @@ import io.vertx.core.json.JsonArray;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
 
+import java.util.HashSet;
+import java.util.Objects;
 import java.util.Set;
+
+import static java.lang.Integer.parseInt;
 
 public class GroupHandler {
   private Vertx vertx;
   private final StudentStore studentStore;
   private final GroupStore groupStore;
+  private final TutorStore tutorStore;
   // TODO: do something reasonable
 
   public GroupHandler(Vertx vertx) {
     this.vertx = vertx;
     this.studentStore = StudentStore.getStore();
+    this.tutorStore = TutorStore.getStore();
     this.groupStore = GroupStore.getStore();
   }
 
@@ -36,24 +42,90 @@ public class GroupHandler {
   }
 
   private void deleteGroup(RoutingContext context) {
-    var groupId = context.pathParam("gid");
-    // TODO: do something reasonable
+    Integer groupId = parseInt(context.pathParam("gid"));
+    var response = context.response();
+    var group = groupStore.find(groupId);
+
+    if (group.isPresent()) {
+      groupStore.delete(group.get());
+      response.setStatusCode(200).end("Group: \"" + group  + "\" succesfully deleted!");
+    } else {
+      response.setStatusCode(409).end("Group: \"" + group + "\" does not exists!");
+    }
+    context.response().end();
   }
 
   private void registerGroup(RoutingContext context) {
-    /* TODO: do something reasonable
-          - reqeuest an Array of usernames
-          - response a goup with an id, a tutor for the group and groupmembers
-     */
-    int beispiel = 0;
-    JsonArray array = context.getBodyAsJsonArray();
-    String valueUsername = array.getString(beispiel);
     var response = context.response();
+
+    JsonArray array = context.getBodyAsJsonArray();
+    Set<Student> groupMembers = new HashSet<>();
+    Set<String> groupStrengths = new HashSet<>();
+    Tutor bestTutor = null;
+    int bestSimilarities = 0;
+    int currSimilarities = 0;
+
+    try {
+      //GruppenListe  !!CHECKEN OB DER STUDENT SCHON EIN GRUPPENMITGLIED IST!!
+      for (int i = 0; i < array.size(); i++) {
+        var studentFromArray = studentStore.find(array.getString(i));
+
+        if (studentFromArray.isPresent()) {
+          groupMembers.add(studentFromArray.get());
+        } else {
+          response.setStatusCode(409).end("The user: \"" + studentFromArray + "\" does not exists!");
+        }
+      }
+
+      //GruppenStärke
+      for (Student currGroupMember : groupMembers) {
+        groupStrengths.addAll(currGroupMember.getStrengthsStudent());
+      }
+
+      //Tutoren Kompetänzen mit GruppenStärke vergleichen
+      for (Tutor currTutor : tutorStore.getAll()) {
+        if (currTutor.getCapacityTutor() != 0) {
+          currSimilarities = 0;
+
+          for (String i : currTutor.getCompetenciesTutor()) {
+            for (String j : groupStrengths) {
+              if (i.equals(j)) {
+                currSimilarities++;
+
+                if (currSimilarities > bestSimilarities) {
+                  bestSimilarities = currSimilarities;
+                  bestTutor = currTutor;
+                }
+              }
+            }
+          }
+        }
+      }
+
+      //Gruppe erstellen
+      var group = new Group(bestTutor, groupMembers);
+      // bestTutor.getCapacityTutor() - 1;
+      groupStore.store(group);
+      response.setStatusCode(200).end("Succesfully Created Group:" + group);
+
+    } catch (IllegalArgumentException | NullPointerException | ClassCastException ex) {
+      response.setStatusCode(406).end("Invalid Content");
+    }
+
+
+
 
   }
 
   private void getAll(RoutingContext context) {
     // TODO: do something reasonable
+    var response = context.response();
+
+    if (groupStore.getSize() == 0)  {
+      response.setStatusCode(409).end("No Groups existing!");
+    } else {
+      response.setStatusCode(200).end("Liste der Gruppen" + groupStore.getAll().toString());
+    }
   }
 
 }
