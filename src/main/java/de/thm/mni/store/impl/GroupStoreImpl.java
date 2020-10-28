@@ -14,7 +14,7 @@ public class GroupStoreImpl implements GroupStore {
 
   private final Set<Group> runtimeStore = new HashSet<>();
 
-
+  private int lol;
   private static GroupStore instance;
   public static GroupStore getInstance() {
     if (instance == null) {
