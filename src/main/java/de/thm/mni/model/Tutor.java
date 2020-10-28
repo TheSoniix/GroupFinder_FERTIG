@@ -1,6 +1,7 @@
 package de.thm.mni.model;
 
 
+import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
 
@@ -21,7 +22,7 @@ public class Tutor extends User {
 
 
   public Set<String> getCompetenciesTutor() {
-    return competencies;
+    return new HashSet<>(competencies);
   }
 
   public int getCapacityTutor() {

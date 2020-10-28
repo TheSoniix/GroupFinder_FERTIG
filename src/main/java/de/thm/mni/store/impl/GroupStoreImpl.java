@@ -3,6 +3,7 @@ package de.thm.mni.store.impl;
 import de.thm.mni.model.Group;
 import de.thm.mni.model.Tutor;
 import de.thm.mni.store.GroupStore;
+import de.thm.mni.store.StudentStore;
 import de.thm.mni.store.TutorStore;
 
 import java.util.HashSet;
@@ -28,22 +29,24 @@ public class GroupStoreImpl implements GroupStore {
   }
 
   @Override
-  public Optional<Group> find(String username) {
-   return Optional.empty();
+  public Optional<Group> find(Integer id) {
+   return runtimeStore.stream()
+     .filter(group -> group.getId().equals(id))
+     .findFirst();
   }
 
   @Override
   public void delete(Group group) {
-
+    runtimeStore.remove(group);
   }
 
   @Override
   public Set<Group> getAll() {
-    return null;
+    return new HashSet<>(runtimeStore);
   }
 
   @Override
   public int getSize() {
-    return 0;
+    return runtimeStore.size();
   }
 }

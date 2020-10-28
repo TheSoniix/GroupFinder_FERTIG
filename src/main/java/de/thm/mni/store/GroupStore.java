@@ -15,7 +15,7 @@ public interface GroupStore {
 
   void store(Group group);
 
-  Optional<Group> find(String username);
+  Optional<Group> find(Integer id);
 
 
   void delete(Group group);

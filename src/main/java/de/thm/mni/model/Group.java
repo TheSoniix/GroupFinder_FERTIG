@@ -1,6 +1,7 @@
 package de.thm.mni.model;
 
 
+import java.util.Objects;
 import java.util.Set;
 
 public class Group {
@@ -10,8 +11,8 @@ public class Group {
 
   public Group(Tutor tutor, Set<Student> members) {
     id += 1;
-    this.tutor = tutor;
-    this.members = members;
+    this.tutor = Objects.requireNonNull(tutor);
+    this.members = Objects.requireNonNull(members);
   }
 
   public Tutor getTutor() {
@@ -20,6 +21,10 @@ public class Group {
 
   public Set<Student> getMembers() {
     return members;
+  }
+
+  public Integer getId() {
+    return id;
   }
 
   @Override

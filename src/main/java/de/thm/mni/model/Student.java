@@ -1,6 +1,7 @@
 package de.thm.mni.model;
 
 
+import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
 
@@ -18,11 +19,11 @@ public class Student extends User {
 
 
   public Set<String> getStrengthsStudent() {
-    return strengths;
+    return new HashSet<>(strengths);
   }
 
   public Set<String> getWeaknessesStudent() {
-    return weaknesses;
+    return new HashSet<>(weaknesses);
   }
 
 
