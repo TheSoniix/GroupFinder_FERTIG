@@ -23,5 +23,12 @@ public class CandidatesHandler {
   private void getCandidates(RoutingContext context) {
     var username = context.queryParam("forStudent");
     // TODO: do something reasonable
+
+
+
+
+
+
+
   }
 }

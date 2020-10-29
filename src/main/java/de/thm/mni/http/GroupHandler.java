@@ -12,7 +12,6 @@ import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
 
 import java.util.HashSet;
-import java.util.Objects;
 import java.util.Set;
 
 import static java.lang.Integer.parseInt;
@@ -70,24 +69,25 @@ public class GroupHandler {
       for (int i = 0; i < array.size(); i++) {
         var studentFromArray = studentStore.find(array.getString(i));
 
-        if (studentFromArray.isPresent()) {
+        if (studentFromArray.isPresent() && !studentFromArray.get().getAlreadyMember()) {
           groupMembers.add(studentFromArray.get());
+          studentFromArray.get().setAlreadyMember(true);
         } else {
-          response.setStatusCode(409).end("The user: \"" + studentFromArray + "\" does not exists!");
+          response.setStatusCode(409).end("The user: \"" + studentFromArray + "\" does not exists or is already member of a group!");
         }
       }
 
       //GruppenStärke
       for (Student currGroupMember : groupMembers) {
-        groupStrengths.addAll(currGroupMember.getStrengthsStudent());
+        groupStrengths.addAll(currGroupMember.getStrengths());
       }
 
       //Tutoren Kompetänzen mit GruppenStärke vergleichen
       for (Tutor currTutor : tutorStore.getAll()) {
-        if (currTutor.getCapacityTutor() != 0) {
+        if (currTutor.getCapacity() != 0) {
           currSimilarities = 0;
 
-          for (String i : currTutor.getCompetenciesTutor()) {
+          for (String i : currTutor.getCompetencies()) {
             for (String j : groupStrengths) {
               if (i.equals(j)) {
                 currSimilarities++;
@@ -101,10 +101,11 @@ public class GroupHandler {
           }
         }
       }
+      assert bestTutor != null;
+      bestTutor.setCapacity(bestTutor.getCapacity() - 1);
 
       //Gruppe erstellen
       var group = new Group(bestTutor, groupMembers);
-      // bestTutor.getCapacityTutor() - 1;
       groupStore.store(group);
       response.setStatusCode(200).end("Succesfully Created Group:" + group);
 

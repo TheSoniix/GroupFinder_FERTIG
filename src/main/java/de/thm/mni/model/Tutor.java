@@ -8,7 +8,7 @@ import java.util.Set;
 public class Tutor extends User {
 
   private final Set<String> competencies;
-  private final int capacity;
+  private  int capacity;
 
   public Tutor(String fname, String sname, String username, String email, String password,
                Set<String> competencies, int capacity) {
@@ -21,12 +21,16 @@ public class Tutor extends User {
   }
 
 
-  public Set<String> getCompetenciesTutor() {
+  public Set<String> getCompetencies() {
     return new HashSet<>(competencies);
   }
 
-  public int getCapacityTutor() {
+  public int getCapacity() {
     return capacity;
+  }
+
+  public void setCapacity(int capacity) {
+    this.capacity = capacity;
   }
 
   @Override
