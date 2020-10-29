@@ -47,7 +47,6 @@ public class Student extends User {
       ", email='" + getEmail() + '\'' +
       "strengths=" + strengths +
       ", weaknesses=" + weaknesses +
-      ", alreadyMember=" + alreadyMember +
       '}';
   }
 

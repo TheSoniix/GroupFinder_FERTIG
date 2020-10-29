@@ -82,16 +82,14 @@ public class GroupHandler {
         groupStrengths.addAll(currGroupMember.getStrengths());
       }
 
-      //Tutoren Kompetänzen mit GruppenStärke vergleichen
+      //Tutoren Kompetänzen mit GruppenStärke vergleichen //KEINE 3 FOR SCHLEIFEN, AUSLAGERN IN NEUEN FUNKTION
       for (Tutor currTutor : tutorStore.getAll()) {
         if (currTutor.getCapacity() != 0) {
           currSimilarities = 0;
-
           for (String i : currTutor.getCompetencies()) {
             for (String j : groupStrengths) {
               if (i.equals(j)) {
                 currSimilarities++;
-
                 if (currSimilarities > bestSimilarities) {
                   bestSimilarities = currSimilarities;
                   bestTutor = currTutor;
@@ -112,10 +110,6 @@ public class GroupHandler {
     } catch (IllegalArgumentException | NullPointerException | ClassCastException ex) {
       response.setStatusCode(406).end("Invalid Content");
     }
-
-
-
-
   }
 
   private void getAll(RoutingContext context) {
