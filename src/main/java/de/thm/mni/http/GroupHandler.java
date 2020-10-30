@@ -47,7 +47,7 @@ public class GroupHandler {
 
     if (group.isPresent()) {
       groupStore.delete(group.get());
-      response.setStatusCode(200).end("Group: \"" + group  + "\" succesfully deleted!");
+      response.setStatusCode(200).end("Group: \"" + group + "\" succesfully deleted!");
     } else {
       response.setStatusCode(409).end("Group: \"" + group + "\" does not exists!");
     }
@@ -56,71 +56,92 @@ public class GroupHandler {
 
   private void registerGroup(RoutingContext context) {
     var response = context.response();
+    JsonArray usernameArray = context.getBodyAsJsonArray();
 
-    JsonArray array = context.getBodyAsJsonArray();
-    Set<Student> groupMembers = new HashSet<>();
-    Set<String> groupStrengths = new HashSet<>();
-    Tutor bestTutor = null;
-    int bestSimilarities = 0;
-    int currSimilarities = 0;
+    //Gruppe erstellen
+    var group = new Group(findBestTutor(groupList(usernameArray)), groupList(usernameArray));
+    groupStore.store(group);
+    response.setStatusCode(200).end("Succesfully Created Group:" + group);
 
-    try {
-      //GruppenListe  !!CHECKEN OB DER STUDENT SCHON EIN GRUPPENMITGLIED IST!!
-      for (int i = 0; i < array.size(); i++) {
-        var studentFromArray = studentStore.find(array.getString(i));
-
-        if (studentFromArray.isPresent() && !studentFromArray.get().getAlreadyMember()) {
-          groupMembers.add(studentFromArray.get());
-          studentFromArray.get().setAlreadyMember(true);
-        } else {
-          response.setStatusCode(409).end("The user: \"" + studentFromArray + "\" does not exists or is already member of a group!");
-        }
-      }
-
-      //GruppenStärke
-      for (Student currGroupMember : groupMembers) {
-        groupStrengths.addAll(currGroupMember.getStrengths());
-      }
-
-      //Tutoren Kompetänzen mit GruppenStärke vergleichen //KEINE 3 FOR SCHLEIFEN, AUSLAGERN IN NEUEN FUNKTION
-      for (Tutor currTutor : tutorStore.getAll()) {
-        if (currTutor.getCapacity() != 0) {
-          currSimilarities = 0;
-          for (String i : currTutor.getCompetencies()) {
-            for (String j : groupStrengths) {
-              if (i.equals(j)) {
-                currSimilarities++;
-                if (currSimilarities > bestSimilarities) {
-                  bestSimilarities = currSimilarities;
-                  bestTutor = currTutor;
-                }
-              }
-            }
-          }
-        }
-      }
-      assert bestTutor != null;
-      bestTutor.setCapacity(bestTutor.getCapacity() - 1);
-
-      //Gruppe erstellen
-      var group = new Group(bestTutor, groupMembers);
-      groupStore.store(group);
-      response.setStatusCode(200).end("Succesfully Created Group:" + group);
-
-    } catch (IllegalArgumentException | NullPointerException | ClassCastException ex) {
-      response.setStatusCode(406).end("Invalid Content");
-    }
   }
 
   private void getAll(RoutingContext context) {
     // TODO: do something reasonable
     var response = context.response();
 
-    if (groupStore.getSize() == 0)  {
+    if (groupStore.getSize() == 0) {
       response.setStatusCode(409).end("No Groups existing!");
     } else {
       response.setStatusCode(200).end("Liste der Gruppen" + groupStore.getAll().toString());
     }
+  }
+
+
+  //Create a grouplist for the request
+  private Set<Student> groupList(JsonArray usernameArray) {
+    Set<Student> groupMembers = new HashSet<>();
+
+    for (int i = 0; i < usernameArray.size(); i++) {
+      var studentFromArray = studentStore.find(usernameArray.getString(i));
+      if (studentFromArray.isPresent() && !studentFromArray.get().getAlreadyMember()) {
+        groupMembers.add(studentFromArray.get());
+        studentFromArray.get().setAlreadyMember(true);
+      }
+    }
+    return groupMembers;
+  }
+
+  //Find the best Tutor for the grouplist we got from the request
+  private Tutor findBestTutor(Set<Student> groupMembers) {
+    Set<Tutor> tempTutorList = new HashSet<>(tutorStore.getAll());
+    Tutor bestTutor = null;
+    int bestSimilarities = 0;
+    int currSimilarities;
+
+    //tempTutorList removed all tutor with 0 capacity
+    for (Tutor currTutor : tutorStore.getAll()) {
+      if (currTutor.getCapacity() == 0) {
+        tempTutorList.remove(currTutor);
+      }
+    }
+
+    //find the best tutor
+    for (Tutor currTutor : tempTutorList) {
+      if (tempTutorList.size() == 1) {
+        currTutor.setCapacity(currTutor.getCapacity() - 1);
+        return currTutor;
+      } else {
+        currSimilarities = 0;
+        currSimilarities = similarityCounter(currTutor, groupMembers, currSimilarities);
+        if (currSimilarities > bestSimilarities) {
+          bestSimilarities = currSimilarities;
+          bestTutor = currTutor;
+        }
+      }
+    }
+    assert bestTutor != null;
+    bestTutor.setCapacity(bestTutor.getCapacity() - 1);
+
+    return bestTutor;
+  }
+
+  //Counts the similarities between the competencies of a Tutor and the grouptStrengths
+  private int similarityCounter(Tutor currTutor, Set<Student> groupMembers, int currSimilarities) {
+    Set<String> groupStrengths = new HashSet<>();
+
+    //GroupStrengths
+    for (Student currGroupMember : groupMembers) {
+      groupStrengths.addAll(currGroupMember.getStrengths());
+    }
+
+    for (String currCompetencies : currTutor.getCompetencies()) {
+      for (String currStrength : groupStrengths) {
+        if (currCompetencies.equals(currStrength)) {
+          currSimilarities++;
+        }
+      }
+    }
+    return currSimilarities;
   }
 
 }

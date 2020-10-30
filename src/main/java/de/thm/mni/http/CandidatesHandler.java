@@ -22,9 +22,7 @@ public class CandidatesHandler {
     var router = Router.router(vertx);
 
 
-    //CHANGED THE PARAM TO PATHPARAM INSTEAD OF QUERYPARAM
     router.get("/").handler(this::getCandidates);
-
     return router;
   }
 
@@ -49,7 +47,8 @@ public class CandidatesHandler {
 
         //CandidatesList sort
         Student finalForStudent = forStudent;
-        candidatesList.sort( (Student a, Student b) -> Math.min(sortCandidates(finalForStudent, a), sortCandidates(finalForStudent, b)));
+        candidatesList.sort(Comparator.comparingInt((Student a) -> sortCandidates(finalForStudent, a)));
+
 
         //responses
         response.setStatusCode(200).end("CandidatesList: " + candidatesList.toString());
