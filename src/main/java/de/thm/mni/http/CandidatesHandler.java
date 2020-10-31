@@ -30,41 +30,34 @@ public class CandidatesHandler {
     var username = context.queryParam("forStudent");
     var response = context.response();
     var studentFromUrl = studentStore.find(username.get(0));
+
+    if (studentFromUrl.isPresent()) {
+      var list = createList(username);
+      if (list.size() == 0) {
+        response.setStatusCode(200).end("CandidatesList: " + list.toString());
+      } else response.setStatusCode(404).end("No Students are in available");
+    } else response.setStatusCode(409).end("This Student doesnt exist!");
+  }
+
+  public List<Student> createList(List<String> username) {
     List<Student> candidatesList = new ArrayList<>();
     Student forStudent = null;
 
-    try {
-
-      //CandidatesList
-      if (studentFromUrl.isPresent()) {
-        for (Student currStudent : studentStore.getAll()) {
-          if (!currStudent.getAlreadyMember() && !currStudent.getUsername().equals(username.get(0)) ) {
-            candidatesList.add(currStudent);
-          }else if (currStudent.getUsername().equals(username.get(0))) {
-            forStudent = currStudent;
-          }
-        }
-
-        //CandidatesList sort
-        Student finalForStudent = forStudent;
-        candidatesList.sort(Comparator.comparingInt((Student a) -> sortCandidates(finalForStudent, a)));
-
-
-        //responses
-        response.setStatusCode(200).end("CandidatesList: " + candidatesList.toString());
-      } response.setStatusCode(409).end("This Student doesnt exist!");
-    } catch (IllegalArgumentException | NullPointerException | ClassCastException ex) {
-      response.setStatusCode(406).end("Invalid Content");
+    for (Student currStudent : studentStore.getAll()) {
+      if (!currStudent.getAlreadyMember() && !currStudent.getUsername().equals(username.get(0))) {
+        candidatesList.add(currStudent);
+      } else if (currStudent.getUsername().equals(username.get(0))) {
+        forStudent = currStudent;
+      }
     }
+    Student finalForStudent = forStudent;
+    candidatesList.sort(Comparator.comparingInt((Student a) -> sortCandidates(finalForStudent, a)));
+    return candidatesList;
   }
 
-  public int sortCandidates (Student finalforStudent, Student objekt) {
+  public int sortCandidates(Student finalforStudent, Student objekt) {
     Set<String> tempSet = new HashSet<>(finalforStudent.getWeaknesses());
     tempSet.removeAll(objekt.getStrengths());
     return tempSet.size();
   }
-
-
-
-
 }

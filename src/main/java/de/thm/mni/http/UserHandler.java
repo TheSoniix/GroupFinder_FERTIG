@@ -41,7 +41,6 @@ public class UserHandler {
     } else {
       response.setStatusCode(200).end("Liste der Studenten: " + studentStore.getAll().toString() +
         " Liste der Tutoren: " + tutorStore.getAll().toString());
-
     }
   }
 
@@ -60,7 +59,6 @@ public class UserHandler {
     } else {
       response.setStatusCode(409).end("The user: \"" + username + "\" does not exists!");
     }
-    context.response().end();
   }
 
   private void createUser(RoutingContext context) {
@@ -68,48 +66,53 @@ public class UserHandler {
     try {
       JsonObject data = context.getBodyAsJson();
       var competencies = data.getJsonArray("competencies");
+      var username = data.getJsonArray("username");
 
-      if (competencies == null) {
-        var strengthsArray = data.getJsonArray("strengths");
-        var weaknessesArray = data.getJsonArray("weaknesses");
-        var user = new Student(
-          data.getString("fname"),
-          data.getString("sname"),
-          data.getString("username"),
-          data.getString("email"),
-          data.getString("password"),
-          arrayToStringSet(strengthsArray),
-          arrayToStringSet(weaknessesArray)
-        );
-
-        if (studentStore.find(user.getUsername()).isPresent() || tutorStore.find(user.getUsername()).isPresent()) {
-          response.setStatusCode(409).end("Another user with the same username already exists!");
-        } else {
-          studentStore.store(user);
-          response.setStatusCode(201).end("Succesfully Created: " + "\"" + user + "\"");
-        }
+      if (studentStore.find(username.encode()).isPresent() || tutorStore.find(username.encode()).isPresent()) {
+        response.setStatusCode(409).end("Another user with the same username already exists!");
       } else {
-        var user = new Tutor(
-          data.getString("fname"),
-          data.getString("sname"),
-          data.getString("username"),
-          data.getString("email"),
-          data.getString("password"),
-          arrayToStringSet(competencies),
-          data.getInteger("capacity")
-        );
-
-        if (tutorStore.find(user.getUsername()).isPresent() || studentStore.find(user.getUsername()).isPresent()) {
-          response.setStatusCode(409).end("Another user with the same username already exists!");
+        if (competencies == null) {
+          var student = createStudent(data);
+          response.setStatusCode(201).end("Succesfully Created: " + "\"" + student + "\"");
         } else {
-          tutorStore.store(user);
-          response.setStatusCode(201).end("Succesfully Created: " + "\"" + user + "\"");
+          var tutor = createTutor(data);
+          response.setStatusCode(201).end("Succesfully Created: " + "\"" + tutor + "\"");
         }
       }
-
     } catch (IllegalArgumentException | NullPointerException | ClassCastException ex) {
       response.setStatusCode(406).end("Invalid Content");
     }
+  }
+
+  private Student createStudent(JsonObject data) {
+    var strengths = data.getJsonArray("strengths");
+    var weaknesses = data.getJsonArray("weaknesses");
+
+    var student = new Student(
+      data.getString("fname"),
+      data.getString("sname"),
+      data.getString("username"),
+      data.getString("email"),
+      data.getString("password"),
+      arrayToStringSet(strengths),
+      arrayToStringSet(weaknesses)
+    );
+    return student;
+  }
+
+  private Tutor createTutor(JsonObject data) {
+    var competencies = data.getJsonArray("competencies");
+
+    var tutor = new Tutor(
+      data.getString("fname"),
+      data.getString("sname"),
+      data.getString("username"),
+      data.getString("email"),
+      data.getString("password"),
+      arrayToStringSet(competencies),
+      data.getInteger("capacity")
+    );
+    return tutor;
   }
 
   private Set<String> arrayToStringSet(JsonArray arr) {
