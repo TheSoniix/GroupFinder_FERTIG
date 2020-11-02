@@ -57,12 +57,23 @@ public class GroupHandler {
   private void registerGroup(RoutingContext context) {
     var response = context.response();
     JsonArray usernameArray = context.getBodyAsJsonArray();
+    Set<Student> groupList = groupList(usernameArray);
+    var bestTutor = findBestTutor(groupList);
 
-    //Gruppe erstellen
-    var group = new Group(findBestTutor(groupList(usernameArray)), groupList(usernameArray));
-    groupStore.store(group);
-    response.setStatusCode(200).end("Succesfully Created Group:" + group);
+    System.out.println("Liste: " + groupList);
+    System.out.println("Turor: " + bestTutor);
 
+    if (groupList.size() == 0) {
+      //Was ist, wenn groupList nicht null ist, da ein Gruppenmitglied erstellt wurde
+      response.setStatusCode(400).end("Richtigen Fehler zu werfen! Bsp. keine Studenten verfügbar, falsche usernames");
+    } else if (bestTutor == null) {
+      response.setStatusCode(400).end("Richtigen Fehler zu werfen! Bsp. keine Kapazität, kein Tutor erstellt");
+    } else {
+      //Gruppe erstellen && Beindungen erfüllen
+      var group = new Group(bestTutor, groupList);
+      groupStore.store(group);
+      response.setStatusCode(200).end("Succesfully Created Group:" + group);
+    }
   }
 
   private void getAll(RoutingContext context) {
@@ -83,11 +94,12 @@ public class GroupHandler {
 
     for (int i = 0; i < usernameArray.size(); i++) {
       var studentFromArray = studentStore.find(usernameArray.getString(i));
-      if (studentFromArray.isPresent() && !studentFromArray.get().getAlreadyMember()) {
+      if (studentFromArray.isPresent() && studentFromArray.get().getAlreadyMember()) {
         groupMembers.add(studentFromArray.get());
         studentFromArray.get().setAlreadyMember(true);
       }
     }
+    System.out.println("liste after groupList funktion: " + groupMembers);
     return groupMembers;
   }
 

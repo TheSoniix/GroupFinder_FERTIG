@@ -66,16 +66,18 @@ public class UserHandler {
     try {
       JsonObject data = context.getBodyAsJson();
       var competencies = data.getJsonArray("competencies");
-      var username = data.getJsonArray("username");
+      var username = data.getString("username");
 
-      if (studentStore.find(username.encode()).isPresent() || tutorStore.find(username.encode()).isPresent()) {
+      if (studentStore.find(username).isPresent() || tutorStore.find(username).isPresent()) {
         response.setStatusCode(409).end("Another user with the same username already exists!");
       } else {
         if (competencies == null) {
           var student = createStudent(data);
+          studentStore.store(student);
           response.setStatusCode(201).end("Succesfully Created: " + "\"" + student + "\"");
         } else {
           var tutor = createTutor(data);
+          tutorStore.store(tutor);
           response.setStatusCode(201).end("Succesfully Created: " + "\"" + tutor + "\"");
         }
       }
@@ -97,6 +99,8 @@ public class UserHandler {
       arrayToStringSet(strengths),
       arrayToStringSet(weaknesses)
     );
+
+    System.out.println(student);
     return student;
   }
 
@@ -112,6 +116,7 @@ public class UserHandler {
       arrayToStringSet(competencies),
       data.getInteger("capacity")
     );
+    System.out.println(tutor);
     return tutor;
   }
 

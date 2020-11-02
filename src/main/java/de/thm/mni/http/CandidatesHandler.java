@@ -33,7 +33,7 @@ public class CandidatesHandler {
 
     if (studentFromUrl.isPresent()) {
       var list = createList(username);
-      if (list.size() == 0) {
+      if (list.size() != 0) {
         response.setStatusCode(200).end("CandidatesList: " + list.toString());
       } else response.setStatusCode(404).end("No Students are in available");
     } else response.setStatusCode(409).end("This Student doesnt exist!");
@@ -44,7 +44,7 @@ public class CandidatesHandler {
     Student forStudent = null;
 
     for (Student currStudent : studentStore.getAll()) {
-      if (!currStudent.getAlreadyMember() && !currStudent.getUsername().equals(username.get(0))) {
+      if (currStudent.getAlreadyMember() && !currStudent.getUsername().equals(username.get(0))) {
         candidatesList.add(currStudent);
       } else if (currStudent.getUsername().equals(username.get(0))) {
         forStudent = currStudent;

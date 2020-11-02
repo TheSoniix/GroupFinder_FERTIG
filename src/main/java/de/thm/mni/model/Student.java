@@ -30,7 +30,7 @@ public class Student extends User {
   }
 
   public boolean getAlreadyMember() {
-    return alreadyMember;
+    return !alreadyMember;
   }
 
   public void setAlreadyMember(boolean alreadyMember) {
