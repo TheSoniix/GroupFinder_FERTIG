@@ -21,7 +21,7 @@ public class GroupHandler {
   private final StudentStore studentStore;
   private final GroupStore groupStore;
   private final TutorStore tutorStore;
-  // TODO: do something reasonable
+
 
   public GroupHandler(Vertx vertx) {
     this.vertx = vertx;
@@ -49,7 +49,7 @@ public class GroupHandler {
       groupStore.delete(group.get());
       response.setStatusCode(200).end("Group: \"" + group + "\" succesfully deleted!");
     } else {
-      response.setStatusCode(409).end("Group: \"" + group + "\" does not exists!");
+      response.setStatusCode(404).end("Group: \"" + group + "\" does not exists!");
     }
     context.response().end();
   }
@@ -57,27 +57,44 @@ public class GroupHandler {
   private void registerGroup(RoutingContext context) {
     var response = context.response();
     JsonArray usernameArray = context.getBodyAsJsonArray();
-    Set<Student> groupList = groupList(usernameArray);
-    var bestTutor = findBestTutor(groupList);
+    var status = arrayControll(usernameArray);
 
-    System.out.println("Liste: " + groupList);
-    System.out.println("Turor: " + bestTutor);
-
-    if (groupList.size() == 0) {
-      //Was ist, wenn groupList nicht null ist, da ein Gruppenmitglied erstellt wurde
-      response.setStatusCode(400).end("Richtigen Fehler zu werfen! Bsp. keine Studenten verfügbar, falsche usernames");
-    } else if (bestTutor == null) {
-      response.setStatusCode(400).end("Richtigen Fehler zu werfen! Bsp. keine Kapazität, kein Tutor erstellt");
+    if (status == 404) {
+      response.setStatusCode(status).end("Ein Student existiert nicht!");
+    } else if (status == 409) {
+      response.setStatusCode(status).end("Ein Student ist bereits in einer Gruppe!");
     } else {
-      //Gruppe erstellen && Beindungen erfüllen
-      var group = new Group(bestTutor, groupList);
+      var groupSet = createGroupList(usernameArray);
+      var bestTutor = findBestTutor(groupSet);
+      var group = new Group(bestTutor, groupSet);
       groupStore.store(group);
       response.setStatusCode(200).end("Succesfully Created Group:" + group);
     }
   }
 
+  private Set<Student> createGroupList(JsonArray array) {
+    Set<Student> groupSet = new HashSet<>();
+    for (int i = 0; i < array.size(); i++) {
+      var studentFromArray = studentStore.find(array.getString(i));
+      groupSet.add(studentFromArray.get());
+      studentFromArray.get().setAlreadyMember(true);
+    }
+    return groupSet;
+  }
+
+  private int arrayControll (JsonArray arr) {
+    for (int i = 0; i < arr.size(); i++) {
+      var student = studentStore.find(arr.getString(i));
+      if (student.isEmpty()) {
+        return 404;
+      } else if (student.get().getAlreadyMember()) {
+        return 409;
+      }
+    }
+    return 200;
+  }
+
   private void getAll(RoutingContext context) {
-    // TODO: do something reasonable
     var response = context.response();
 
     if (groupStore.getSize() == 0) {
@@ -88,21 +105,6 @@ public class GroupHandler {
   }
 
 
-  //Create a grouplist for the request
-  private Set<Student> groupList(JsonArray usernameArray) {
-    Set<Student> groupMembers = new HashSet<>();
-
-    for (int i = 0; i < usernameArray.size(); i++) {
-      var studentFromArray = studentStore.find(usernameArray.getString(i));
-      if (studentFromArray.isPresent() && studentFromArray.get().getAlreadyMember()) {
-        groupMembers.add(studentFromArray.get());
-        studentFromArray.get().setAlreadyMember(true);
-      }
-    }
-    System.out.println("liste after groupList funktion: " + groupMembers);
-    return groupMembers;
-  }
-
   //Find the best Tutor for the grouplist we got from the request
   private Tutor findBestTutor(Set<Student> groupMembers) {
     Set<Tutor> tempTutorList = new HashSet<>(tutorStore.getAll());
@@ -110,14 +112,15 @@ public class GroupHandler {
     int bestSimilarities = 0;
     int currSimilarities;
 
-    //tempTutorList removed all tutor with 0 capacity
+    //remove all tutor with 0 capacity from tempTutorList
     for (Tutor currTutor : tutorStore.getAll()) {
       if (currTutor.getCapacity() == 0) {
         tempTutorList.remove(currTutor);
       }
     }
 
-    //find the best tutor
+
+    //find the best tutor from tempTutorList
     for (Tutor currTutor : tempTutorList) {
       if (tempTutorList.size() == 1) {
         currTutor.setCapacity(currTutor.getCapacity() - 1);
@@ -137,7 +140,7 @@ public class GroupHandler {
     return bestTutor;
   }
 
-  //Counts the similarities between the competencies of a Tutor and the grouptStrengths
+
   private int similarityCounter(Tutor currTutor, Set<Student> groupMembers, int currSimilarities) {
     Set<String> groupStrengths = new HashSet<>();
 
@@ -145,7 +148,7 @@ public class GroupHandler {
     for (Student currGroupMember : groupMembers) {
       groupStrengths.addAll(currGroupMember.getStrengths());
     }
-
+//Counts the similarities between the competencies of a Tutor and the grouptStrengths
     for (String currCompetencies : currTutor.getCompetencies()) {
       for (String currStrength : groupStrengths) {
         if (currCompetencies.equals(currStrength)) {

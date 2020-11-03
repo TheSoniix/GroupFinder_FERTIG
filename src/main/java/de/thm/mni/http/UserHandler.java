@@ -37,7 +37,7 @@ public class UserHandler {
     var response = context.response();
 
     if (studentStore.getSize() == 0 && tutorStore.getSize() == 0) {
-      response.setStatusCode(409).end("Both Lists are empty!");
+      response.setStatusCode(404).end("Both Lists are empty!");
     } else {
       response.setStatusCode(200).end("Liste der Studenten: " + studentStore.getAll().toString() +
         " Liste der Tutoren: " + tutorStore.getAll().toString());
@@ -57,7 +57,7 @@ public class UserHandler {
       tutorStore.delete(userTutor.get());
       response.setStatusCode(200).end("User: \"" + username + "\" succesfully deleted!");
     } else {
-      response.setStatusCode(409).end("The user: \"" + username + "\" does not exists!");
+      response.setStatusCode(404).end("The user: \"" + username + "\" does not exists!");
     }
   }
 
@@ -99,8 +99,6 @@ public class UserHandler {
       arrayToStringSet(strengths),
       arrayToStringSet(weaknesses)
     );
-
-    System.out.println(student);
     return student;
   }
 
@@ -116,7 +114,6 @@ public class UserHandler {
       arrayToStringSet(competencies),
       data.getInteger("capacity")
     );
-    System.out.println(tutor);
     return tutor;
   }
 
