@@ -9,7 +9,7 @@ public class Student extends User {
 
   private final Set<String> strengths;
   private final Set<String> weaknesses;
-  private boolean alreadyMember;
+
 
 
   public Student(String fname, String sname, String username, String email, String password,
@@ -17,7 +17,6 @@ public class Student extends User {
     super(fname, sname, username, email, password);
     this.strengths = Objects.requireNonNull(strengths);
     this.weaknesses = Objects.requireNonNull(weaknesses);
-    this.alreadyMember = false;
   }
 
 
@@ -29,25 +28,14 @@ public class Student extends User {
     return new HashSet<>(weaknesses);
   }
 
-  public boolean getAlreadyMember() {
-    return alreadyMember;
-  }
-
-  public void setAlreadyMember(boolean alreadyMember) {
-    this.alreadyMember = alreadyMember;
-  }
-
-
   public String toString() {
     return "Student{" +
       "fname='" + getFname() + '\'' +
       ", sname='" + getSname() + '\'' +
       ", username='" + getUsername() + '\'' +
       ", email='" + getEmail() + '\'' +
-      "strengths=" + strengths +
+      ", strengths=" + strengths +
       ", weaknesses=" + weaknesses +
       '}';
   }
-
-
 }

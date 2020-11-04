@@ -10,14 +10,14 @@ public class StudentStoreImpl implements StudentStore {
   private final Set<Student> runtimeStore = new HashSet<>();
 
 
-  private static StudentStoreImpl instance;
+  private static StudentStore instanceStudent;
 
 
-  public static StudentStoreImpl getInstance() {
-    if (instance == null) {
-      instance = new StudentStoreImpl();
+  public static StudentStore getInstanceStudent() {
+    if (instanceStudent == null) {
+      instanceStudent = new StudentStoreImpl();
     }
-    return instance;
+    return instanceStudent;
   }
 
   @Override

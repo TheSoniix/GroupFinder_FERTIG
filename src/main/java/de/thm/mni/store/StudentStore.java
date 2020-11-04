@@ -13,7 +13,7 @@ public interface StudentStore {
    * @return The instance of the user store.
    */
 
-  static StudentStore getStore(){    return StudentStoreImpl.getInstance();};
+  static StudentStore getStore(){    return StudentStoreImpl.getInstanceStudent();};
 
   /**
    * Store a user into the store. If the user already exists, it will be overwritten.

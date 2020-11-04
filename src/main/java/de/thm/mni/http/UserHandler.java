@@ -5,7 +5,6 @@ import de.thm.mni.model.Tutor;
 import de.thm.mni.store.StudentStore;
 import de.thm.mni.store.TutorStore;
 import io.vertx.core.Vertx;
-import io.vertx.core.json.Json;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.Router;
@@ -74,6 +73,7 @@ public class UserHandler {
         if (competencies == null) {
           var student = createStudent(data);
           studentStore.store(student);
+          // throw new IllegalArgumentException("test");
           response.setStatusCode(201).end("Succesfully Created: " + "\"" + student + "\"");
         } else {
           var tutor = createTutor(data);
@@ -90,7 +90,7 @@ public class UserHandler {
     var strengths = data.getJsonArray("strengths");
     var weaknesses = data.getJsonArray("weaknesses");
 
-    var student = new Student(
+    return new Student(
       data.getString("fname"),
       data.getString("sname"),
       data.getString("username"),
@@ -99,13 +99,12 @@ public class UserHandler {
       arrayToStringSet(strengths),
       arrayToStringSet(weaknesses)
     );
-    return student;
   }
 
   private Tutor createTutor(JsonObject data) {
     var competencies = data.getJsonArray("competencies");
 
-    var tutor = new Tutor(
+    return new Tutor(
       data.getString("fname"),
       data.getString("sname"),
       data.getString("username"),
@@ -114,7 +113,6 @@ public class UserHandler {
       arrayToStringSet(competencies),
       data.getInteger("capacity")
     );
-    return tutor;
   }
 
   private Set<String> arrayToStringSet(JsonArray arr) {

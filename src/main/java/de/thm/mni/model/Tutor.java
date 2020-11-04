@@ -33,6 +33,8 @@ public class Tutor extends User {
     this.capacity = capacity;
   }
 
+
+
   @Override
   public String toString() {
     return "Tutor{" +
@@ -40,7 +42,7 @@ public class Tutor extends User {
       ", sname='" + getSname() + '\'' +
       ", username='" + getUsername() + '\'' +
       ", email='" + getEmail() + '\'' +
-      "competencies=" + competencies +
+      ", competencies=" + competencies +
       ", capacity=" + capacity +
       '}';
   }

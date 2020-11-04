@@ -1,6 +1,7 @@
 package de.thm.mni.store;
 
 import de.thm.mni.model.Tutor;
+import de.thm.mni.store.impl.StudentStoreImpl;
 import de.thm.mni.store.impl.TutorStoreImpl;
 import java.util.Optional;
 import java.util.Set;
@@ -17,7 +18,7 @@ public interface TutorStore {
    */
 
   static TutorStore getStore() {
-    return TutorStoreImpl.getInstance();
+    return TutorStoreImpl.getInstanceTutor();
   }
 
   /**

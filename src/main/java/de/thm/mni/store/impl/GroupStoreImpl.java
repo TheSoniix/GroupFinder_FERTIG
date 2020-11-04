@@ -1,10 +1,8 @@
 package de.thm.mni.store.impl;
 
 import de.thm.mni.model.Group;
-import de.thm.mni.model.Tutor;
+import de.thm.mni.model.Student;
 import de.thm.mni.store.GroupStore;
-import de.thm.mni.store.StudentStore;
-import de.thm.mni.store.TutorStore;
 
 import java.util.HashSet;
 import java.util.Optional;
@@ -47,5 +45,17 @@ public class GroupStoreImpl implements GroupStore {
   @Override
   public int getSize() {
     return runtimeStore.size();
+  }
+
+
+  public boolean searchStudent(String username) {
+    for (Group currGroup : runtimeStore) {
+      for (Student currStudent : currGroup.getMembers()) {
+        if (currStudent.getUsername().equals(username)) {
+          return true;
+        }
+      }
+    }
+    return false;
   }
 }

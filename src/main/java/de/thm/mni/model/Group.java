@@ -16,16 +16,20 @@ public class Group {
     this.members = Objects.requireNonNull(members);
   }
 
+  public Integer getId() {
+    return id;
+  }
+
+  public static Integer getCounter() {
+    return counter;
+  }
+
   public Tutor getTutor() {
     return tutor;
   }
 
   public Set<Student> getMembers() {
     return members;
-  }
-
-  public Integer getId() {
-    return id;
   }
 
   @Override

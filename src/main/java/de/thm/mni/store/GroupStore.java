@@ -52,4 +52,6 @@ public interface GroupStore {
 
   int getSize();
 
+  boolean searchStudent(String username);
+
 }

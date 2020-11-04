@@ -11,14 +11,14 @@ public class TutorStoreImpl implements TutorStore {
   private final Set<Tutor> runtimeStore = new HashSet<>();
 
 
-  private static TutorStore instance;
+  private static TutorStore instanceTutor;
 
 
-  public static TutorStore getInstance() {
-    if (instance == null) {
-      instance = new TutorStoreImpl();
+  public static TutorStore getInstanceTutor() {
+    if (instanceTutor == null) {
+      instanceTutor = new TutorStoreImpl();
     }
-    return instance;
+    return instanceTutor;
   }
 
   @Override

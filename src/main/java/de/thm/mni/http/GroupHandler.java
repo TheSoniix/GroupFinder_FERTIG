@@ -55,43 +55,48 @@ public class GroupHandler {
   }
 
   private void registerGroup(RoutingContext context) {
-    var response = context.response();
     JsonArray usernameArray = context.getBodyAsJsonArray();
-    var status = arrayControll(usernameArray);
+    var response = context.response();
 
-    if (status == 404) {
-      response.setStatusCode(status).end("Ein Student existiert nicht!");
-    } else if (status == 409) {
-      response.setStatusCode(status).end("Ein Student ist bereits in einer Gruppe!");
-    } else {
-      var groupSet = createGroupList(usernameArray);
+    try {
+      var groupSet = createGroupList(usernameArray, context);
       var bestTutor = findBestTutor(groupSet);
-      var group = new Group(bestTutor, groupSet);
-      groupStore.store(group);
-      response.setStatusCode(200).end("Succesfully Created Group:" + group);
+
+      if (bestTutor == null) {
+        response.setStatusCode(409).end("Es steht kein Tutor zur Verfügung!");
+      } else if (groupSet != null) {
+        bestTutor.setCapacity(bestTutor.getCapacity() - 1);
+        var group = new Group(bestTutor, groupSet);
+        groupStore.store(group);
+        response.setStatusCode(200).end("Succesfully Created Group:" + group);
+      }
+    } catch (IllegalArgumentException | NullPointerException | ClassCastException ex) {
+      response.setStatusCode(406).end("Invalid Content");
     }
+
   }
 
-  private Set<Student> createGroupList(JsonArray array) {
+  private Set<Student> createGroupList(JsonArray arr, RoutingContext context) {
     Set<Student> groupSet = new HashSet<>();
-    for (int i = 0; i < array.size(); i++) {
-      var studentFromArray = studentStore.find(array.getString(i));
-      groupSet.add(studentFromArray.get());
-      studentFromArray.get().setAlreadyMember(true);
-    }
-    return groupSet;
-  }
-
-  private int arrayControll (JsonArray arr) {
+    var response = context.response();
     for (int i = 0; i < arr.size(); i++) {
       var student = studentStore.find(arr.getString(i));
+      var studentGroupcheck = groupStore.searchStudent(arr.getString(i));
+
       if (student.isEmpty()) {
-        return 404;
-      } else if (student.get().getAlreadyMember()) {
-        return 409;
+        response.setStatusCode(404).end("Der Student " + arr.getString(i) + " existiert nicht!");
+        return null;
+      } else if (studentGroupcheck) {
+        response.setStatusCode(409).end("Der Student " + arr.getString(i) + " ist bereits in einer Gruppe!");
+        return null;
+      } else if (groupSet.contains(student.get())) {
+        response.setStatusCode(409).end("Der Student " + arr.getString(i) + " wurde zum 2. Mal aufgerufen!");
+        return null;
+      } else {
+        groupSet.add(student.get());
       }
     }
-    return 200;
+    return groupSet;
   }
 
   private void getAll(RoutingContext context) {
@@ -119,25 +124,23 @@ public class GroupHandler {
       }
     }
 
-
-    //find the best tutor from tempTutorList
-    for (Tutor currTutor : tempTutorList) {
-      if (tempTutorList.size() == 1) {
-        currTutor.setCapacity(currTutor.getCapacity() - 1);
-        return currTutor;
-      } else {
-        currSimilarities = 0;
-        currSimilarities = similarityCounter(currTutor, groupMembers, currSimilarities);
-        if (currSimilarities > bestSimilarities) {
-          bestSimilarities = currSimilarities;
-          bestTutor = currTutor;
+    if (tempTutorList.size() == 0) {
+      return null;
+    } else {
+      for (Tutor currTutor : tempTutorList) {
+        if (tempTutorList.size() == 1) {
+          return currTutor;
+        } else {
+          currSimilarities = 0;
+          currSimilarities = similarityCounter(currTutor, groupMembers, currSimilarities);
+          if (currSimilarities > bestSimilarities) {
+            bestSimilarities = currSimilarities;
+            bestTutor = currTutor;
+          }
         }
       }
+      return bestTutor;
     }
-    assert bestTutor != null;
-    bestTutor.setCapacity(bestTutor.getCapacity() - 1);
-
-    return bestTutor;
   }
 
 
@@ -158,5 +161,6 @@ public class GroupHandler {
     }
     return currSimilarities;
   }
+
 
 }
