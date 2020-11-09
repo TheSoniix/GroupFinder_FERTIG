@@ -1,6 +1,6 @@
 package de.thm.mni.model;
 
-import de.thm.mni.util.Strings;
+import de.thm.mni.util.CheckConstructorInputs;
 
 public abstract class User {
   private final String fname;
@@ -10,11 +10,11 @@ public abstract class User {
   private final String password;
 
   public User(String fname, String sname, String username, String email, String password) {
-    this.fname = Strings.requireNotNullOrBlank(fname);
-    this.sname = Strings.requireNotNullOrBlank(sname);
-    this.username = Strings.requireNotNullOrBlank(username);
-    this.email = Strings.requireNotNullOrBlank(email);
-    this.password = Strings.requireNotNullOrBlank(password);
+    this.fname = CheckConstructorInputs.requireNotNullOrBlankString(fname);
+    this.sname = CheckConstructorInputs.requireNotNullOrBlankString(sname);
+    this.username = CheckConstructorInputs.requireNotNullOrBlankString(username);
+    this.email = CheckConstructorInputs.requireNotNullOrBlankString(email);
+    this.password = CheckConstructorInputs.requireNotNullOrBlankString(password);
   }
 
   public String getFname() {

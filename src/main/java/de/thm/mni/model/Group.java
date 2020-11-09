@@ -1,7 +1,6 @@
 package de.thm.mni.model;
 
 
-import java.util.Objects;
 import java.util.Set;
 
 public class Group {
@@ -12,8 +11,8 @@ public class Group {
 
   public Group(Tutor tutor, Set<Student> members) {
     this.id = Group.counter++;
-    this.tutor = Objects.requireNonNull(tutor);
-    this.members = Objects.requireNonNull(members);
+    this.tutor = tutor;
+    this.members = members;
   }
 
   public Integer getId() {

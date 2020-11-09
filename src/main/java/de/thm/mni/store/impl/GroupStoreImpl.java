@@ -2,8 +2,8 @@ package de.thm.mni.store.impl;
 
 import de.thm.mni.model.Group;
 import de.thm.mni.model.Student;
+import de.thm.mni.model.Tutor;
 import de.thm.mni.store.GroupStore;
-
 import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
@@ -35,6 +35,8 @@ public class GroupStoreImpl implements GroupStore {
   @Override
   public void delete(Group group) {
     runtimeStore.remove(group);
+    var tutor = group.getTutor();
+    tutor.setCapacity(tutor.getCapacity() + 1);
   }
 
   @Override
@@ -47,15 +49,31 @@ public class GroupStoreImpl implements GroupStore {
     return runtimeStore.size();
   }
 
-
-  public boolean searchStudent(String username) {
+  @Override
+  public Group searchStudent(Student student) {
     for (Group currGroup : runtimeStore) {
       for (Student currStudent : currGroup.getMembers()) {
-        if (currStudent.getUsername().equals(username)) {
-          return true;
+        if (currStudent == student) {
+          return currGroup;
         }
+      }
+    }
+    return null;
+  }
+
+  public boolean searchTutor(Tutor tutor) {
+    for (Group currGroup : runtimeStore) {
+      if (currGroup.getTutor() == tutor) {
+        return true;
       }
     }
     return false;
   }
+
+  public void deleteStudentFromGroup(Student student) {
+    for (Group currGroup : runtimeStore) {
+      currGroup.getMembers().remove(student);
+    }
+  }
+
 }

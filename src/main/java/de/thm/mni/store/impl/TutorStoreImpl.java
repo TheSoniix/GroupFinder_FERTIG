@@ -1,20 +1,19 @@
 package de.thm.mni.store.impl;
 
 import de.thm.mni.model.Tutor;
-import de.thm.mni.store.TutorStore;
-
+import de.thm.mni.store.UserStore;
 import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
 
-public class TutorStoreImpl implements TutorStore {
+public class TutorStoreImpl implements UserStore<Tutor> {
   private final Set<Tutor> runtimeStore = new HashSet<>();
 
 
-  private static TutorStore instanceTutor;
+  private static UserStore<Tutor> instanceTutor;
 
 
-  public static TutorStore getInstanceTutor() {
+  public static UserStore<Tutor> getInstanceTutor() {
     if (instanceTutor == null) {
       instanceTutor = new TutorStoreImpl();
     }

@@ -2,7 +2,7 @@ package de.thm.mni.http;
 
 import de.thm.mni.model.Student;
 import de.thm.mni.store.GroupStore;
-import de.thm.mni.store.StudentStore;
+import de.thm.mni.store.UserStore;
 import io.vertx.core.Vertx;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
@@ -11,13 +11,13 @@ import java.util.*;
 
 public class CandidatesHandler {
   private Vertx vertx;
-  private final StudentStore studentStore;
+  private final UserStore<Student> studentStore;
   private final GroupStore groupStore;
 
 
   public CandidatesHandler(Vertx vertx) {
     this.vertx = vertx;
-    this.studentStore = StudentStore.getStore();
+    this.studentStore = UserStore.getStoreStudent();
     this.groupStore = GroupStore.getStore();
   }
 
@@ -35,7 +35,7 @@ public class CandidatesHandler {
     var studentFromUrl = studentStore.find(username.get(0));
 
     if (studentFromUrl.isPresent()) {
-      var list = createList(username);
+      var list = createList(username.get(0));
       if (list.size() != 0) {
         response.setStatusCode(200).end("CandidatesList: " + list);
       } else response.setStatusCode(409).end("No Students are available");
@@ -43,27 +43,28 @@ public class CandidatesHandler {
   }
 
 
-  public List<Student> createList(List<String> username) {
+  private List<Student> createList(String username) {
     List<Student> candidatesList = new ArrayList<>();
     Student forStudent = null;
 
     for (Student currStudent : studentStore.getAll()) {
-      var searchStudent = groupStore.searchStudent(currStudent.getUsername());
-
-      if (!searchStudent && !currStudent.getUsername().equals(username.get(0))) {
+      var searchStudent = groupStore.searchStudent(currStudent);
+      if (searchStudent == null && !currStudent.getUsername().equals(username)) {
         candidatesList.add(currStudent);
-      } else if (currStudent.getUsername().equals(username.get(0))) {
+      } else if (currStudent.getUsername().equals(username)) {
         forStudent = currStudent;
       }
     }
-    Student finalForStudent = forStudent;
-    candidatesList.sort(Comparator.comparingInt((Student a) -> sortCandidates(finalForStudent, a))
-      .thenComparingInt((a) -> -(a.getStrengths().size())));
+    return sortList(forStudent, candidatesList);
+  }
 
+  private List<Student> sortList(Student forStudent, List<Student> candidatesList) {
+    candidatesList.sort(Comparator.comparingInt((Student a) -> contrastCounter(forStudent, a))
+      .thenComparingInt((a) -> -(a.getStrengths().size())));
     return candidatesList;
   }
 
-  public int sortCandidates(Student finalforStudent, Student objekt) {
+  private int contrastCounter(Student finalforStudent, Student objekt) {
     Set<String> tempSet = new HashSet<>(finalforStudent.getWeaknesses());
     tempSet.removeAll(objekt.getStrengths());
     return tempSet.size();

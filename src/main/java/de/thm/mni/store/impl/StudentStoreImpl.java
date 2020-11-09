@@ -1,19 +1,19 @@
 package de.thm.mni.store.impl;
 
 import de.thm.mni.model.Student;
-import de.thm.mni.store.StudentStore;
+import de.thm.mni.store.UserStore;
 import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
 
-public class StudentStoreImpl implements StudentStore {
+public class StudentStoreImpl implements UserStore<Student> {
   private final Set<Student> runtimeStore = new HashSet<>();
 
 
-  private static StudentStore instanceStudent;
+  private static UserStore<Student> instanceStudent;
 
 
-  public static StudentStore getInstanceStudent() {
+  public static UserStore<Student> getInstanceStudent() {
     if (instanceStudent == null) {
       instanceStudent = new StudentStoreImpl();
     }
@@ -26,7 +26,7 @@ public class StudentStoreImpl implements StudentStore {
   }
 
   @Override
-  public Optional<Student> find(String username) {
+  public Optional find(String username) {
     return runtimeStore.stream()
       .filter(user -> user.getUsername().equalsIgnoreCase(username))
       .findFirst();

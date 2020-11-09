@@ -1,6 +1,7 @@
 package de.thm.mni.store;
 
 import de.thm.mni.model.Group;
+import de.thm.mni.model.Student;
 import de.thm.mni.model.Tutor;
 import de.thm.mni.store.impl.GroupStoreImpl;
 
@@ -52,6 +53,10 @@ public interface GroupStore {
 
   int getSize();
 
-  boolean searchStudent(String username);
+  Group searchStudent(Student student);
+
+  boolean searchTutor(Tutor tutor);
+
+  void deleteStudentFromGroup(Student student);
 
 }

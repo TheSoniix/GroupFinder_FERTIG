@@ -1,8 +1,9 @@
 package de.thm.mni.model;
 
 
+import de.thm.mni.util.CheckConstructorInputs;
+
 import java.util.HashSet;
-import java.util.Objects;
 import java.util.Set;
 
 public class Student extends User {
@@ -15,8 +16,8 @@ public class Student extends User {
   public Student(String fname, String sname, String username, String email, String password,
                  Set<String> strengths, Set<String> weaknesses) {
     super(fname, sname, username, email, password);
-    this.strengths = Objects.requireNonNull(strengths);
-    this.weaknesses = Objects.requireNonNull(weaknesses);
+    this.strengths = CheckConstructorInputs.requireNotNullOrBlankSet(strengths);
+    this.weaknesses = CheckConstructorInputs.requireNotNullOrBlankSet(weaknesses);
   }
 
 
