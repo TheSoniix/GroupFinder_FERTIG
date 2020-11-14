@@ -1,12 +1,16 @@
 package de.thm.mni;
 
 import de.thm.mni.http.RestApi;
-import de.thm.mni.model.Student;
 import io.vertx.core.Vertx;
 
 public class Start {
   private static final int SERVER_PORT = 8888;
 
+  /**
+   * This methode starts the program and the server.
+   *
+   * @param args is an array that contains the command line parameters received from the call.
+   */
   public static void main(String[] args) {
     Vertx vertx = Vertx.vertx();
     var server = vertx.createHttpServer();

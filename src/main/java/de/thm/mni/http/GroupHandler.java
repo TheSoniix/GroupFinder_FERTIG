@@ -3,8 +3,7 @@ package de.thm.mni.http;
 import de.thm.mni.model.Group;
 import de.thm.mni.model.Student;
 import de.thm.mni.model.Tutor;
-import de.thm.mni.store.GroupStore;
-import de.thm.mni.store.UserStore;
+import de.thm.mni.store.Store;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonArray;
 import io.vertx.ext.web.Router;
@@ -17,19 +16,27 @@ import static java.lang.Integer.parseInt;
 
 public class GroupHandler {
   private Vertx vertx;
-  private final UserStore<Student> studentStore;
-  private final GroupStore groupStore;
-  private final UserStore<Tutor> tutorStore;
+  private final Store<Student, String> studentStore;
+  private final Store<Group, Integer> groupStore;
+  private final Store<Tutor, String> tutorStore;
 
-
+  /**
+   * A constructor of the class GroupHandler that initialize vertx and the instances of the Stores.
+   *
+   * @param vertx An instance to be able to communicate with Vertx.
+   */
   public GroupHandler(Vertx vertx) {
     this.vertx = vertx;
-    this.studentStore = UserStore.getStoreStudent();
-    this.tutorStore = UserStore.getStoreTutor();
-    this.groupStore = GroupStore.getStore();
+    this.studentStore = Store.getStoreStudent();
+    this.tutorStore = Store.getStoreTutor();
+    this.groupStore = Store.getStore();
   }
 
-
+  /**
+   * Method which assigns routes to the appropriate method.
+   *
+   * @return the route that was called.
+   */
   public Router getRouter() {
     var router = Router.router(vertx);
 
@@ -47,9 +54,10 @@ public class GroupHandler {
     var group = groupStore.find(groupId);
 
     if (group.isPresent()) {
+      group.get().getMembers().forEach((Student student) -> student.setGroupMember(false));
       groupStore.delete(group.get());
-      response.setStatusCode(200).end("Group: \"" + group + "\" succesfully deleted!");
-    } else response.setStatusCode(404).end("Group: \"" + group + "\" does not exists!");
+      response.setStatusCode(200).end("Group: \"" + group.get().getId() + "\" succesfully deleted!");
+    } else response.setStatusCode(404).end("Group: \"" + groupId + "\" does not exists!");
   }
 
 
@@ -61,6 +69,7 @@ public class GroupHandler {
       var groupSet = createGroupSet(usernameArray);
       var bestTutor = findBestTutor(groupSet);
       bestTutor.setCapacity(bestTutor.getCapacity() - 1);
+      groupSet.forEach((Student student) -> student.setGroupMember(true));
 
       var group = new Group(
         bestTutor,
@@ -90,23 +99,22 @@ public class GroupHandler {
   private Set<Student> createGroupSet(JsonArray arr) {
     Set<Student> groupSet = new HashSet<>();
 
-    if (arr.size() <= 1) {
-      throw new IllegalArgumentException("The group needs minimum 2 members!");
-    } else {
-      for (int i = 0; i < arr.size(); i++) {
-        var student = studentStore.find(arr.getString(i));
+    for (int i = 0; i < arr.size(); i++) {
+      var student = studentStore.find(arr.getString(i));
 
-        if (student.isEmpty()) {
-          throw new NullPointerException("Der  Student " + arr.getString(i) + " existiert nicht!");
-        } else if (groupStore.searchStudent(student.get()) != null) {
-          throw new NullPointerException("Der Student " + arr.getString(i) + " ist bereits in einer Gruppe!");
-        } else if (groupSet.contains(student.get())) {
-          throw new NullPointerException("Der Student " + arr.getString(i) + " wurde zum 2. Mal aufgerufen!");
-        } else {
-          groupSet.add(student.get());
-        }
+      if (arr.size() <= 1) {
+        throw new IllegalArgumentException("The group needs minimum 2 members!");
+      } else if (student.isEmpty()) {
+        throw new NullPointerException("The student " + arr.getString(i) + " doesnt exist!");
+      } else if (student.get().isGroupMember()) {
+        throw new NullPointerException("The student " + arr.getString(i) + " is already in a group!");
+      } else if (groupSet.contains(student.get())) {
+        throw new NullPointerException("The student " + arr.getString(i) + " was called for the second time!");
+      } else {
+        groupSet.add(student.get());
       }
     }
+
     return groupSet;
   }
 
@@ -124,12 +132,16 @@ public class GroupHandler {
       return tempTutorSet.stream().findFirst().get();
     } else {
       for (Tutor currTutor : tempTutorSet) {
-          currSimilarities = 0;
-          currSimilarities = similarityCounter(currTutor, groupStrength, currSimilarities);
-          if (currSimilarities > bestSimilarities) {
-            bestSimilarities = currSimilarities;
+        currSimilarities = 0;
+        currSimilarities = similarityCounter(currTutor, groupStrength, currSimilarities);
+        if (currSimilarities > bestSimilarities) {
+          bestSimilarities = currSimilarities;
+          bestTutor = currTutor;
+        } else if (bestTutor != null && currSimilarities == bestSimilarities) {
+          if (currTutor.getCompetencies().size() > bestTutor.getCompetencies().size()) {
             bestTutor = currTutor;
           }
+        }
       }
       return bestTutor;
     }

@@ -1,79 +1,78 @@
 package de.thm.mni.store.impl;
 
 import de.thm.mni.model.Group;
-import de.thm.mni.model.Student;
-import de.thm.mni.model.Tutor;
-import de.thm.mni.store.GroupStore;
+import de.thm.mni.store.Store;
+
 import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
 
-public class GroupStoreImpl implements GroupStore {
+public class GroupStoreImpl<T extends Group, S extends Integer> implements Store<T, S> {
+  private final Set<T> runtimeStore = new HashSet<>();
+  private static Store<Group, Integer> instanceGroup;
 
-  private final Set<Group> runtimeStore = new HashSet<>();
-
-  private static GroupStore instance;
-  public static GroupStore getInstance() {
-    if (instance == null) {
-      instance = new GroupStoreImpl();
+  /**
+   * If not already happened, this methode generate an instance of GroupStoreImpl with the typ parameter Group and Integer.
+   *
+   * @return the instance of StoreImpl.
+   */
+  public static Store<Group, Integer> getInstanceGroup() {
+    if (instanceGroup == null) {
+      instanceGroup = new GroupStoreImpl<>();
     }
-    return instance;
+    return instanceGroup;
   }
 
+  /**
+   * Stores the group.
+   *
+   * @param group The group to store.
+   */
   @Override
-  public void store(Group group) {
+  public void store(T group) {
     this.runtimeStore.add(group);
   }
 
+  /**
+   * Searches for a group with the given id.
+   *
+   * @param id The id to find the group.
+   * @return A non-empty optional of an group, if the group was found.
+   * Otherwise the optional is empty.
+   */
   @Override
-  public Optional<Group> find(Integer id) {
-   return runtimeStore.stream()
-     .filter(group -> group.getId().equals(id))
-     .findFirst();
+  public Optional<T> find(S id) {
+    return runtimeStore.stream()
+      .filter(group -> group.getId().equals(id))
+      .findFirst();
   }
 
+  /**
+   * Removes a group from the store. If the group does not exists, the call does nothing.
+   *
+   * @param group The group to remove
+   */
   @Override
-  public void delete(Group group) {
+  public void delete(T group) {
     runtimeStore.remove(group);
     var tutor = group.getTutor();
     tutor.setCapacity(tutor.getCapacity() + 1);
   }
 
+  /**
+   * @return Returns all stored groups.
+   */
   @Override
-  public Set<Group> getAll() {
+  public Set<T> getAll() {
     return new HashSet<>(runtimeStore);
   }
 
+  /**
+   * @return Returns the size of the stored groups.
+   */
   @Override
   public int getSize() {
     return runtimeStore.size();
-  }
-
-  @Override
-  public Group searchStudent(Student student) {
-    for (Group currGroup : runtimeStore) {
-      for (Student currStudent : currGroup.getMembers()) {
-        if (currStudent == student) {
-          return currGroup;
-        }
-      }
-    }
-    return null;
-  }
-
-  public boolean searchTutor(Tutor tutor) {
-    for (Group currGroup : runtimeStore) {
-      if (currGroup.getTutor() == tutor) {
-        return true;
-      }
-    }
-    return false;
-  }
-
-  public void deleteStudentFromGroup(Student student) {
-    for (Group currGroup : runtimeStore) {
-      currGroup.getMembers().remove(student);
-    }
   }
 
 }

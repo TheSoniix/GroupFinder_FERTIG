@@ -1,27 +1,33 @@
 package de.thm.mni.http;
 
 import de.thm.mni.model.Student;
-import de.thm.mni.store.GroupStore;
-import de.thm.mni.store.UserStore;
+import de.thm.mni.store.Store;
 import io.vertx.core.Vertx;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
 
 import java.util.*;
 
+
 public class CandidatesHandler {
   private Vertx vertx;
-  private final UserStore<Student> studentStore;
-  private final GroupStore groupStore;
+  private final Store<Student, String> studentStore;
 
-
+  /**
+   * A constructor of the class CandidatesHandler that initialize vertx and the instances of the Stores.
+   *
+   * @param vertx An instance to be able to communicate with Vertx.
+   */
   public CandidatesHandler(Vertx vertx) {
     this.vertx = vertx;
-    this.studentStore = UserStore.getStoreStudent();
-    this.groupStore = GroupStore.getStore();
+    this.studentStore = Store.getStoreStudent();
   }
 
-
+  /**
+   * Method which assigns routes to the appropriate method.
+   *
+   * @return the route that was called.
+   */
   public Router getRouter() {
     var router = Router.router(vertx);
     router.get("/").handler(this::getCandidates);
@@ -34,12 +40,15 @@ public class CandidatesHandler {
     var response = context.response();
     var studentFromUrl = studentStore.find(username.get(0));
 
-    if (studentFromUrl.isPresent()) {
+    if (studentFromUrl.isEmpty()) {
+      response.setStatusCode(404).end("This Student: " + username.get(0) + " doesnt exist!");
+    } else {
       var list = createList(username.get(0));
-      if (list.size() != 0) {
-        response.setStatusCode(200).end("CandidatesList: " + list);
-      } else response.setStatusCode(409).end("No Students are available");
-    } else response.setStatusCode(404).end("This Student doesnt exist!");
+      if (list.size() == 0) {
+        response.setStatusCode(409).end("No Students are available");
+      } else response.setStatusCode(200).end("CandidatesList: " + list);
+    }
+
   }
 
 
@@ -48,8 +57,7 @@ public class CandidatesHandler {
     Student forStudent = null;
 
     for (Student currStudent : studentStore.getAll()) {
-      var searchStudent = groupStore.searchStudent(currStudent);
-      if (searchStudent == null && !currStudent.getUsername().equals(username)) {
+      if (!currStudent.isGroupMember() && !currStudent.getUsername().equals(username)) {
         candidatesList.add(currStudent);
       } else if (currStudent.getUsername().equals(username)) {
         forStudent = currStudent;

@@ -2,8 +2,7 @@ package de.thm.mni.http;
 
 import de.thm.mni.model.Student;
 import de.thm.mni.model.Tutor;
-import de.thm.mni.store.GroupStore;
-import de.thm.mni.store.UserStore;
+import de.thm.mni.store.Store;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
@@ -15,17 +14,25 @@ import java.util.Set;
 
 public class UserHandler {
   private final Vertx vertx;
-  private final UserStore<Student> studentStore;
-  private final UserStore<Tutor> tutorStore;
-  private final GroupStore groupStore;
+  private final Store<Student, String> studentStore;
+  private final Store<Tutor, String> tutorStore;
 
+  /**
+   * A constructor of the class UserHandler that initialize vertx and the instances of the Stores.
+   *
+   * @param vertx An instance to be able to communicate with Vertx.
+   */
   public UserHandler(Vertx vertx) {
     this.vertx = vertx;
-    this.studentStore = UserStore.getStoreStudent();
-    this.tutorStore = UserStore.getStoreTutor();
-    this.groupStore = GroupStore.getStore();
+    this.studentStore = Store.getStoreStudent();
+    this.tutorStore = Store.getStoreTutor();
   }
 
+  /**
+   * Method which assigns routes to the appropriate method.
+   *
+   * @return the route that was called.
+   */
   public Router getRouter() {
     var router = Router.router(vertx);
     router.post("/").handler(this::createUser);
@@ -44,39 +51,20 @@ public class UserHandler {
         " Liste der Tutoren: " + tutorStore.getAll().toString());
     }
   }
-  // TODO: - VERBESSERN DIESER DELETE FUNKTION
+
   private void deleteUser(RoutingContext context) {
     String username = context.pathParam("username");
     var response = context.response();
     var userStudent = studentStore.find(username);
     var userTutor = tutorStore.find(username);
 
-    try {
-      if (userStudent.isPresent()) {
-        String text = "";
-        var groupOfStudent = groupStore.searchStudent(userStudent.get());
-        if (groupOfStudent != null) {
-          if (groupOfStudent.getMembers().size() == 2) {
-            groupStore.delete(groupOfStudent);
-          } else groupStore.deleteStudentFromGroup(userStudent.get());
-          text = " And removed from the group.id = \"" + groupOfStudent.getId() + "\" If the number of the groupmembers drop lower then 2, the goup will be dissolved!";
-        }
-        studentStore.delete(userStudent.get());
-        response.setStatusCode(200).end("User: \"" + username + "\" succesfully deleted!" + text);
-
-
-
-      } else if (userTutor.isPresent()) {
-        if (!groupStore.searchTutor(userTutor.get())) {
-          tutorStore.delete(userTutor.get());
-          response.setStatusCode(200).end("User: \"" + username + "\" succesfully deleted!");
-        } else throw new IllegalArgumentException("The tutor : \"" + username + "\" is already in a group. Resolve the group before delete the tutor!");
-      } else throw new IllegalArgumentException("The user: \"" + username + "\" does not exists!");
-
-
-    } catch (IllegalArgumentException | NullPointerException | ClassCastException ex) {
-      response.setStatusCode(404).end(ex.getMessage());
-    }
+    if (userStudent.isPresent()) {
+      studentStore.delete(userStudent.get());
+      response.setStatusCode(200).end("User: \"" + username + "\" succesfully deleted!");
+    } else if (userTutor.isPresent()) {
+      tutorStore.delete(userTutor.get());
+      response.setStatusCode(200).end("User: \"" + username + "\" succesfully deleted!");
+    } else response.setStatusCode(404).end("The user: \"" + username + "\" does not exists!");
   }
 
   private void createUser(RoutingContext context) {
